@@ -1,10 +1,10 @@
 # Physics to Bones 1.0.1
-An addon for Blender 2.80 that converts rigid body simulation to bones
+An addon for Blender 2.80 that converts rigid body simulation to bone animation
 
 How to install: Go into Blender -> Edit -> Preferences -> Add-ons -> Click install -> select object_physicstobones.zip
 
 How to use: 
-* Select a mesh that has rigid body enabled or a action attached to it
+* Select a mesh that has rigid body enabled or an action attached to it
 * Access the addon from Object mode -> Object -> Quick Effects -> Physics to Bones or from the action menu (F3)
 * Adjust the options and click 'OK'
 
