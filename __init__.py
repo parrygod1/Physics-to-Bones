@@ -20,11 +20,12 @@
 
 bl_info = {
     "name": "Physics to Bones",
-    "description": "Converts rigid body animation to bones.",
-    "author": "parrygod(leaderlord)",
-    "version": (1, 0, 0),
+    "description": "Converts rigid body simulation to bone animation.",
+    "author": "parrygod",
+    "version": (1, 0, 1),
     "blender": (2, 80, 0),
     "location": "View3D -> Object -> Quick Effects | Quick Action Menu",
+    "wiki_url": "https://github.com/parrygod1/Physics-to-Bones",
     "category": "Object"
     }
 
@@ -45,55 +46,55 @@ def main(self, context):
     objectList = []
     
     if self.selected_objects_only == False:
-        objectList = [obj for obj in bpy.context.collection.objects]
+        objectList = [obj for obj in bpy.context.collection.objects if ptb.checkIfValidType(obj, 'MESH')]
     else:
         objectList = bpy.context.selected_objects
     
-    ptb.checkIfValidType(objectList, 'MESH')
-    
     if self.create_backup == True:
         ptb.createBackupCollection(objectList)
-        
-    '''if self.separate_first == True:
-        separateMeshesInList(objectList)'''
-        
+          
     if self.merge_objects == True:
         ptb.setOriginToGeom(objectList)
     
     currentArmature = ptb.createArmature()
     armData = currentArmature.data
     
+    bpy.context.scene.frame_set(self.FRAMESTART)
+    #important: current frame has to be set to the start otherwise the bones won't be placed correctly
+    
     for obj in objectList:
         boneName = 'bone_' + obj.name
         
         ptb.addVertGroup(obj, boneName, 1)
-        obj.animation_data_clear()
         obj.parent = currentArmature
         
         ptb.createBone(currentArmature, boneName)
-        ptb.moveBoneToObject(armData.edit_bones[boneName], obj)
+        ptb.moveBoneToObject(armData.edit_bones[boneName], self.BONESIZE, obj)
         armData.edit_bones[boneName].parent = armData.edit_bones['rootTransform']
     
         ptb.addBoneConstraints(currentArmature, boneName, obj)
-        
-        if self.bake_animations == True:
-            bpy.ops.nla.bake(frame_start = self.FRAMESTART, 
-                            frame_end = self.FRAMEEND, 
-                            step = self.STEP, 
-                            only_selected=True, visual_keying=True, 
-                            clear_constraints=True, clear_parents=False, 
-                            use_current_action=False, bake_types={'POSE'})
-     
+    
+    
+    if self.bake_animations == True:
+        bpy.ops.nla.bake(frame_start = self.FRAMESTART, 
+                        frame_end = self.FRAMEEND, 
+                        step = self.STEP, 
+                        only_selected=True, visual_keying=True, 
+                        clear_constraints=True, clear_parents=False, 
+                        use_current_action=False, bake_types={'POSE'})
+                            
     ptb.returnToObjectMode()
+    ptb.removeAnimData(objectList)
     
     if self.merge_objects == True and len(objectList) > 1:
         ptb.joinObjectsInList(objectList)
         ptb.setOriginToObject(currentArmature)
-        bpy.ops.rigidbody.object_remove()
+        if bpy.context.object.rigid_body is not None:
+            bpy.ops.rigidbody.object_remove()
         ptb.addArmatureModifier(currentArmature)
-    else: #if we don't do it this way, unmerged objects won't have the armature added and rigidbody removed
+    else: #a loop is needed since the objects are not merged 
         ptb.addArmatureAndRemovePhys(objectList,currentArmature)
-    
+
     self.report({'INFO'}, 'PhysicsToBones: Finished; Processed ' + str(len(objectList)) + ' objects')
     
 class PhysicsToBones(bpy.types.Operator):
@@ -106,13 +107,7 @@ class PhysicsToBones(bpy.types.Operator):
         name = 'Create backup',
         description = 'Create a new collection with duplicated objects',
         default = True
-        )
-    
-    '''separate_first: BoolProperty(
-        name = 'Separate objects',
-        description = 'Separate meshes by loose parts before any operations',
-        default = False
-        )'''
+        )   
     
     merge_objects: BoolProperty(
         name = 'Merge objects',
@@ -155,6 +150,14 @@ class PhysicsToBones(bpy.types.Operator):
         min = 1,
         max = 10000
         )
+    
+    BONESIZE: FloatProperty(
+        name = 'Bone Size',
+        description = 'Length of the bone',
+        default = 3,
+        min = 0.1,
+        max = 10000
+        )
         
     def execute(self, context):
         main(self, context)
@@ -167,15 +170,14 @@ class PhysicsToBones(bpy.types.Operator):
     def draw(self, context):
         layout = self.layout
         
+        split = layout.split()
+        
         row = layout.row()
         row.prop(self, 'create_backup')
         
         row = layout.row()
         row.prop(self, 'selected_objects_only')
-        
-        '''row = layout.row()
-        row.prop(self, 'separate_first')'''
-        
+                
         row = layout.row()
         row.prop(self, 'merge_objects')
         
@@ -189,6 +191,11 @@ class PhysicsToBones(bpy.types.Operator):
         row.prop(self, 'FRAMESTART')
         row.prop(self, 'FRAMEEND')
         row.prop(self, 'STEP')
+        
+        row = layout.row()
+        row.label(text = ' Bone options:')
+        row = layout.row()
+        row.prop(self, 'BONESIZE')
         
 
 def menu_func(self, context):
