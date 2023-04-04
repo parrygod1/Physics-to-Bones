@@ -1,5 +1,5 @@
 # Physics to Bones 1.0.1
-An addon for Blender 2.80 that converts rigid body simulation to bone animation
+An addon for Blender 2.80 and higher versions that converts rigid body simulation to bone animation
 
 How to install: Go into Blender -> Edit -> Preferences -> Add-ons -> Click install -> select object_physicstobones.zip
 
@@ -15,7 +15,5 @@ It might take a while to finish if there are a lot of objects selected, because 
 Known issues:
 * After the script is finished, objects might disappear or appear in a random location. Once you play the animation it will be fine.
 
-Changelog 1.0.1:
-* Added option for bone size
-* Added exceptions for object selection
-* The current frame will be set to startframe to make sure bones are placed correctly
+Changelog 1.0.2:
+* Objects will be parented to the armature after the bake
