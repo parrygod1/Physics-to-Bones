@@ -66,7 +66,6 @@ def main(self, context):
         boneName = 'bone_' + obj.name
         
         ptb.addVertGroup(obj, boneName, 1)
-        obj.parent = currentArmature
         
         ptb.createBone(currentArmature, boneName)
         ptb.moveBoneToObject(armData.edit_bones[boneName], self.BONESIZE, obj)
@@ -85,6 +84,9 @@ def main(self, context):
                             
     ptb.returnToObjectMode()
     ptb.removeAnimData(objectList)
+    
+    for obj in objectList:
+        obj.parent = currentArmature
     
     if self.merge_objects == True and len(objectList) > 1:
         ptb.joinObjectsInList(objectList)
